@@ -43,8 +43,16 @@ class Category(models.Model):
 See recent SQL queries
 ```
 from django.db import connection
+from django.db import reset_queries
 
 connection.queries
+reset_queries()
+```
+
+Prefetch related objects to avoid extra queries
+```
+Women.objects.select_related('cat').all()
+Category.objects.prefetch_related('women_set').all()
 ```
 
 Sorting in reverse order
@@ -80,5 +88,43 @@ Women.objects.filter(title='Ryana').exists()
 Distinct
 ```
 Category.objects.filter(women__title_contains='ли').distinct()
+```
 
+Agregate
+```
+from django.db.models import *
+Women.objects.agregate(Max('cat_id'))
+# Min, Sum, Count, Avg
+```
+
+Get Women.title and coresponding cat.name
+```
+Women.objects.values('title', 'cat__name')
+```
+
+Group by 
+```
+# Count women in each category
+Category.objects.annotate(Count('women'))
+# category id and name. Count women in each category.
+Category.objects.values('id', 'name').annotate(total=Count('women'))
+# get category and women count that greater than 0
+Category.objects.annotate(total=Count('women')).filter(total__gt=0)
+```
+
+Reference field from same model 
+```
+from django.db.models import F
+# women has 'views' field - times post is shown
+Women.objects.get(pk=1).update(views=F('views')+1)
+# or
+w = Women.objects.get(pk=1)
+w.views = F('views') + 1
+```
+
+Raw SQL
+```
+Women.objects.raw('SELECT * FROM women_women')
+Women.objects.raw('SELECT id, title FROM women_women')
+# fields must include 'id' in SELECT
 ```
